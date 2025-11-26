@@ -1,0 +1,9 @@
+---
+applications:
+  - name: openshop
+    memory: 512M
+    buildpacks:
+      - staticfile_buildpack
+    routes:
+      - route: openshop.cfapps.eu12.hana.ondemand.com  # This is the route
+    path: ./dist

@@ -2,6 +2,10 @@
 
 Thank you for your interest in contributing to OpenShop! This guide will help you set up your development environment and understand the project structure.
 
+## 📝 Contributor License Agreement (CLA)
+
+Before you can contribute to OpenShop, you will need to sign the [Contributor License Agreement](CLA.md).
+
 ## 📑 Table of Contents
 
 - [Prerequisites](#-prerequisites)
@@ -830,4 +834,4 @@ Then create Pull Request on GitHub with:
 
 **Thank you for contributing to OpenShop!** 🎉
 
-**Last Updated**: November 2024
+**Last Updated**: November 2025

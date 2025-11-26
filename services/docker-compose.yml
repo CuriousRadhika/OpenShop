@@ -1,0 +1,536 @@
+
+services:
+  # ============================================================================
+  # PostgreSQL Database Services
+  # ============================================================================
+  
+  postgres-user:
+    image: postgres:15-alpine
+    container_name: postgres-user-db
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d userdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-product:
+    image: postgres:15-alpine
+    container_name: postgres-product-db
+    environment:
+      POSTGRES_DB: productdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-product-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d productdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-order:
+    image: postgres:15-alpine
+    container_name: postgres-order-db
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-order-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d orderdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-cart:
+    image: postgres:15-alpine
+    container_name: postgres-cart-db
+    environment:
+      POSTGRES_DB: cartdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-cart-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d cartdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-inventory:
+    image: postgres:15-alpine
+    container_name: postgres-inventory-db
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-inventory-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d inventorydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-payment:
+    image: postgres:15-alpine
+    container_name: postgres-payment-db
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres-payment-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d paymentdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-notification:
+    image: postgres:15-alpine
+    container_name: postgres-notification-db
+    environment:
+      POSTGRES_DB: notificationdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d notificationdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-shipping:
+    image: postgres:15-alpine
+    container_name: postgres-shipping-db
+    environment:
+      POSTGRES_DB: shippingdb
+      POSTGRES_USER: openshop
+      POSTGRES_PASSWORD: openshop123
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres-shipping-data:/var/lib/postgresql/data
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openshop -d shippingdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================================================
+  # Message Broker - Kafka & Zookeeper
+  # ============================================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  # ============================================================================
+  # Microservices
+  # ============================================================================
+
+  user-service:
+    build:
+      context: ./userservice
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user:5432/userdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: ./inventoryservice
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-inventory:5432/inventorydb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres-inventory:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./productservice
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - INVENTORY_SERVICE_URL=http://inventory-service:8086
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-product:5432/productdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      postgres-product:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./paymentservice
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SERVER_PORT=8084
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-payment:5432/paymentdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ./orderservice
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - PAYMENT_SERVICE_URL=http://payment-service:8084
+      - INVENTORY_SERVICE_URL=http://inventory-service:8086
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-order:5432/orderdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres-order:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  cart-service:
+    build:
+      context: ./cartservice
+      dockerfile: Dockerfile
+    container_name: cart-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+      - ORDER_SERVICE_URL=http://order-service:8083
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-cart:5432/cartdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      postgres-cart:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./notificationservice
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-notification:5432/notificationdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  shipping-service:
+    build:
+      context: ./shippingservice
+      dockerfile: Dockerfile
+    container_name: shipping-service
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-shipping:5432/shippingdb
+      - SPRING_DATASOURCE_USERNAME=openshop
+      - SPRING_DATASOURCE_PASSWORD=openshop123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres-shipping:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - USER_SERVICE_URL=http://user-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+      - ORDER_SERVICE_URL=http://order-service:8083
+      - CART_SERVICE_URL=http://cart-service:8085
+      - INVENTORY_SERVICE_URL=http://inventory-service:8086
+      - PAYMENT_SERVICE_URL=http://payment-service:8084
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8087
+      - SHIPPING_SERVICE_URL=http://shipping-service:8088
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      cart-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      shipping-service:
+        condition: service_healthy
+    networks:
+      - openshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+networks:
+  openshop-network:
+    driver: bridge
+    name: openshop-network
+
+volumes:
+  postgres-user-data:
+    name: postgres-user-data
+  postgres-product-data:
+    name: postgres-product-data
+  postgres-order-data:
+    name: postgres-order-data
+  postgres-cart-data:
+    name: postgres-cart-data
+  postgres-inventory-data:
+    name: postgres-inventory-data
+  postgres-payment-data:
+    name: postgres-payment-data
+  postgres-notification-data:
+    name: postgres-notification-data
+  postgres-shipping-data:
+    name: postgres-shipping-data
+  kafka-data:
+    name: kafka-data

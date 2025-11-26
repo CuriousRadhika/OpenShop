@@ -1,0 +1,189 @@
+# ProductService GraphQL Schema
+
+# ============================================
+# Custom Scalars
+# ============================================
+scalar DateTime
+
+# ============================================
+# Enums
+# ============================================
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+  OUT_OF_STOCK
+}
+
+enum ProductSortField {
+  NAME
+  PRICE
+  CREATED_AT
+  UPDATED_AT
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+# ============================================
+# Types
+# ============================================
+
+type Product {
+  id: ID!
+  name: String!
+  description: String
+  category: String
+  price: Float!
+  currency: String
+  sku: String
+  sellerId: ID!
+  imageUrl: String
+  status: ProductStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# ============================================
+# Input Types
+# ============================================
+
+input CreateProductInput {
+  name: String!
+  description: String
+  category: String
+  price: Float!
+  currency: String
+  sku: String
+  imageUrl: String
+}
+
+input UpdateProductInput {
+  name: String
+  description: String
+  category: String
+  price: Float
+  currency: String
+  sku: String
+  imageUrl: String
+  status: ProductStatus
+}
+
+input ProductFilter {
+  category: String
+  status: ProductStatus
+  minPrice: Float
+  maxPrice: Float
+  searchTerm: String
+}
+
+input ProductSort {
+  field: ProductSortField!
+  direction: SortDirection!
+}
+
+# ============================================
+# Pagination Types
+# ============================================
+
+type ProductConnection {
+  edges: [ProductEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ProductEdge {
+  node: Product!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# ============================================
+# Response Types
+# ============================================
+
+type ProductResponse {
+  success: Boolean!
+  message: String
+  product: Product
+  errors: [ErrorDetail!]
+}
+
+type ErrorDetail {
+  field: String
+  message: String!
+  code: String
+}
+
+# ============================================
+# Queries
+# ============================================
+
+type Query {
+  """
+  Get a single product by ID
+  """
+  product(id: ID!): Product
+
+  """
+  Get all products with optional filtering, sorting, and pagination
+  """
+  products(
+    filter: ProductFilter
+    sort: ProductSort
+    first: Int = 20
+    after: String
+  ): ProductConnection!
+
+  """
+  Get products for the authenticated seller
+  Requires SELLER role
+  """
+  myProducts(
+    filter: ProductFilter
+    sort: ProductSort
+  ): [Product!]!
+
+  """
+  Search products by name or description
+  """
+  searchProducts(
+    query: String!
+    category: String
+    first: Int = 20
+    after: String
+  ): ProductConnection!
+}
+
+# ============================================
+# Mutations
+# ============================================
+
+type Mutation {
+  """
+  Create a new product
+  Requires SELLER role
+  """
+  createProduct(input: CreateProductInput!): ProductResponse!
+
+  """
+  Update an existing product
+  Requires SELLER role and ownership of the product
+  """
+  updateProduct(id: ID!, input: UpdateProductInput!): ProductResponse!
+
+  """
+  Delete a product
+  Requires SELLER role and ownership of the product
+  """
+  deleteProduct(id: ID!): ProductResponse!
+}

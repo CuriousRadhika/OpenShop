@@ -297,7 +297,7 @@ cd services
 
 # Run specific service
 cd userservice
-mvn spring-boot:run
+mvn spring-boot:rungit add 
 ```
 
 ### Frontend Development
@@ -372,4 +372,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built with ❤️ using Spring Boot, React, and modern microservices patterns**
 
 **Version**: 1.0.0  
-**Last Updated**: November 2024
+**Last Updated**: November 2025
